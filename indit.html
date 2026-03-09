@@ -1,0 +1,195 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>日常サバイバルゲーム</title>
+
+<style>
+body{
+    font-family: sans-serif;
+    background:#1e1e2f;
+    color:white;
+    text-align:center;
+}
+
+h1{
+    margin-top:20px;
+}
+
+#game{
+    width:400px;
+    margin:auto;
+    background:#2a2a40;
+    padding:20px;
+    border-radius:10px;
+}
+
+.status{
+    margin:10px 0;
+    font-size:18px;
+}
+
+.bar{
+    height:20px;
+    background:#444;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.fill{
+    height:100%;
+    width:100%;
+    background:lime;
+}
+
+button{
+    margin:5px;
+    padding:10px 15px;
+    border:none;
+    border-radius:5px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.8;
+}
+
+#log{
+    margin-top:15px;
+    height:120px;
+    overflow:auto;
+    background:#111;
+    padding:10px;
+    font-size:14px;
+    text-align:left;
+}
+</style>
+
+</head>
+<body>
+
+<h1>🏠 日常サバイバルゲーム</h1>
+
+<div id="game">
+
+<div class="status">🍞 食料
+<div class="bar"><div id="foodBar" class="fill"></div></div>
+</div>
+
+<div class="status">💧 水
+<div class="bar"><div id="waterBar" class="fill"></div></div>
+</div>
+
+<div class="status">😴 体力
+<div class="bar"><div id="energyBar" class="fill"></div></div>
+</div>
+
+<p>📅 生存日数: <span id="day">1</span></p>
+
+<button onclick="shop()">🛒 買い物</button>
+<button onclick="rest()">💤 休む</button>
+<button onclick="explore()">🚶 探索</button>
+
+<div id="log"></div>
+
+</div>
+
+<script>
+
+let food = 100;
+let water = 100;
+let energy = 100;
+let day = 1;
+
+function updateBars(){
+    document.getElementById("foodBar").style.width = food+"%";
+    document.getElementById("waterBar").style.width = water+"%";
+    document.getElementById("energyBar").style.width = energy+"%";
+    document.getElementById("day").textContent = day;
+}
+
+function log(text){
+    const logBox = document.getElementById("log");
+    logBox.innerHTML = text + "<br>" + logBox.innerHTML;
+}
+
+function clamp(){
+    food = Math.max(0,Math.min(100,food));
+    water = Math.max(0,Math.min(100,water));
+    energy = Math.max(0,Math.min(100,energy));
+}
+
+function gameOver(){
+    if(food<=0 || water<=0 || energy<=0){
+        alert("ゲームオーバー\n生存日数: "+day+"日");
+        location.reload();
+    }
+}
+
+function nextTurn(){
+    food -= 5;
+    water -= 7;
+    energy -= 6;
+
+    clamp();
+    day++;
+
+    updateBars();
+    gameOver();
+}
+
+function shop(){
+    if(energy < 10){
+        log("疲れて買い物に行けない…");
+        return;
+    }
+
+    food += 20;
+    water += 20;
+    energy -= 10;
+
+    log("スーパーで食料と水を買った");
+    clamp();
+    nextTurn();
+}
+
+function rest(){
+    energy += 30;
+    food -= 5;
+    water -= 5;
+
+    log("しっかり休んだ");
+    clamp();
+    nextTurn();
+}
+
+function explore(){
+
+    let r = Math.random();
+
+    if(r < 0.4){
+        food += 15;
+        log("食べ物を見つけた！");
+    }
+    else if(r < 0.7){
+        water += 15;
+        log("水を見つけた！");
+    }
+    else{
+        energy -= 15;
+        log("何も見つからず疲れた…");
+    }
+
+    clamp();
+    nextTurn();
+}
+
+updateBars();
+
+</script>
+
+</body>
+</html>
+```
