@@ -1,73 +1,78 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>日常サバイバルゲーム＋アイテム</title>
+<title>日常サバイバルRPG</title>
 
 <style>
 
 body{
-    background:#1b1b2b;
-    color:white;
-    font-family:sans-serif;
-    text-align:center;
+background:#121224;
+color:white;
+font-family:sans-serif;
+text-align:center;
 }
 
 #game{
-    width:420px;
-    margin:auto;
-    background:#2a2a40;
-    padding:20px;
-    border-radius:10px;
-}
-
-.status{
-    margin:10px 0;
+width:500px;
+margin:auto;
+background:#20203a;
+padding:20px;
+border-radius:10px;
 }
 
 .bar{
-    background:#444;
-    height:20px;
-    border-radius:10px;
-    overflow:hidden;
+background:#444;
+height:18px;
+border-radius:10px;
+overflow:hidden;
+margin:5px 0;
 }
 
 .fill{
-    height:100%;
-    background:lime;
+height:100%;
+background:lime;
 }
 
 button{
-    padding:10px;
-    margin:5px;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
+padding:8px 12px;
+margin:5px;
+border:none;
+border-radius:6px;
+cursor:pointer;
 }
 
 #inventory{
-    margin-top:15px;
-    background:#111;
-    padding:10px;
-    border-radius:8px;
+background:#111;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
 }
 
 .item{
-    display:inline-block;
-    padding:6px 10px;
-    margin:4px;
-    background:#333;
-    border-radius:6px;
-    cursor:pointer;
+display:inline-block;
+background:#333;
+padding:6px 10px;
+margin:4px;
+border-radius:6px;
+cursor:pointer;
+}
+
+#shop{
+background:#111;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
 }
 
 #log{
-    margin-top:10px;
-    height:120px;
-    overflow:auto;
-    background:#111;
-    padding:10px;
-    text-align:left;
+margin-top:10px;
+background:#111;
+height:140px;
+overflow:auto;
+padding:10px;
+text-align:left;
 }
 
 </style>
@@ -75,29 +80,46 @@ button{
 
 <body>
 
-<h1>🏠 日常サバイバル</h1>
+<h1>🏠 日常サバイバルRPG</h1>
 
 <div id="game">
 
-<div class="status">🍞 食料
+<p>📅 日数 <span id="day">1</span>　
+🌧 天気 <span id="weather">晴れ</span></p>
+
+<p>⭐ Lv <span id="level">1</span>　
+EXP <span id="exp">0</span></p>
+
+🍞 食料
 <div class="bar"><div id="foodBar" class="fill"></div></div>
-</div>
 
-<div class="status">💧 水
+💧 水
 <div class="bar"><div id="waterBar" class="fill"></div></div>
-</div>
 
-<div class="status">😴 体力
+😴 体力
 <div class="bar"><div id="energyBar" class="fill"></div></div>
-</div>
 
-<p>📅 生存日数 <span id="day">1</span></p>
+<p>💰 お金 <span id="money">50</span>円</p>
 
-<button onclick="rest()">💤 休む</button>
-<button onclick="explore()">🔍 探索</button>
+<h3>🗺 マップ</h3>
+
+<button onclick="goHome()">🏠 家</button>
+<button onclick="goStore()">🏪 コンビニ</button>
+<button onclick="explore('park')">🌳 公園</button>
+<button onclick="explore('forest')">🌲 森</button>
 
 <h3>🎒 持ち物</h3>
 <div id="inventory"></div>
+
+<div id="shop" style="display:none">
+
+<h3>🏪 コンビニ</h3>
+
+<button onclick="buy('food')">🍙 食料 20円</button>
+<button onclick="buy('water')">💧 水 15円</button>
+<button onclick="buy('drink')">🔋 ドリンク 30円</button>
+
+</div>
 
 <div id="log"></div>
 
@@ -108,128 +130,204 @@ button{
 let food=100
 let water=100
 let energy=100
+
 let day=1
+let money=50
+
+let exp=0
+let level=1
 
 let inventory=[]
 
-function log(t){
-    const box=document.getElementById("log")
-    box.innerHTML=t+"<br>"+box.innerHTML
-}
+let weather="晴れ"
 
-function clamp(){
-    food=Math.max(0,Math.min(100,food))
-    water=Math.max(0,Math.min(100,water))
-    energy=Math.max(0,Math.min(100,energy))
+const weathers=["晴れ","雨","嵐"]
+
+function log(t){
+const box=document.getElementById("log")
+box.innerHTML=t+"<br>"+box.innerHTML
 }
 
 function updateBars(){
-    foodBar.style.width=food+"%"
-    waterBar.style.width=water+"%"
-    energyBar.style.width=energy+"%"
-    document.getElementById("day").textContent=day
+foodBar.style.width=food+"%"
+waterBar.style.width=water+"%"
+energyBar.style.width=energy+"%"
+
+dayEl=document.getElementById("day")
+dayEl.textContent=day
+
+document.getElementById("money").textContent=money
+document.getElementById("level").textContent=level
+document.getElementById("exp").textContent=exp
+document.getElementById("weather").textContent=weather
 }
 
-function updateInventory(){
-
-    const inv=document.getElementById("inventory")
-    inv.innerHTML=""
-
-    inventory.forEach((item,i)=>{
-        const div=document.createElement("div")
-        div.className="item"
-        div.innerText=item
-        div.onclick=()=>useItem(i)
-        inv.appendChild(div)
-    })
-}
-
-function useItem(i){
-
-    const item=inventory[i]
-
-    if(item==="🍎 食料"){
-        food+=25
-        log("食料を食べた")
-    }
-
-    if(item==="💧 水"){
-        water+=25
-        log("水を飲んだ")
-    }
-
-    if(item==="🔋 エナジードリンク"){
-        energy+=30
-        log("エナジードリンクで回復")
-    }
-
-    if(item==="🥫 保存食"){
-        food+=40
-        log("保存食で大回復")
-    }
-
-    inventory.splice(i,1)
-
-    clamp()
-    updateBars()
-    updateInventory()
-}
-
-function gameOver(){
-    if(food<=0||water<=0||energy<=0){
-        alert("ゲームオーバー\n生存日数 "+day+"日")
-        location.reload()
-    }
+function clamp(){
+food=Math.max(0,Math.min(100,food))
+water=Math.max(0,Math.min(100,water))
+energy=Math.max(0,Math.min(100,energy))
 }
 
 function nextTurn(){
 
-    food-=5
-    water-=7
-    energy-=6
+food-=5
+water-=6
+energy-=5
 
-    day++
+day++
 
-    clamp()
-    updateBars()
-    gameOver()
+weather=weathers[Math.floor(Math.random()*3)]
+
+clamp()
+
+updateBars()
+
+if(food<=0||water<=0||energy<=0){
+alert("ゲームオーバー 生存 "+day+"日")
+location.reload()
 }
 
-function rest(){
-
-    energy+=30
-    food-=5
-    water-=5
-
-    log("休んで体力回復")
-
-    clamp()
-    nextTurn()
 }
 
-function explore(){
+function gainExp(v){
 
-    const r=Math.random()
+exp+=v
 
-    if(r<0.25){
-        inventory.push("🍎 食料")
-        log("食料を発見！")
-    }
-    else if(r<0.5){
-        inventory.push("💧 水")
-        log("水を発見！")
-    }
-    else if(r<0.75){
-        inventory.push("🔋 エナジードリンク")
-        log("エナジードリンク発見！")
-    }
-    else{
-        inventory.push("🥫 保存食")
-        log("保存食を発見！")
-    }
+if(exp>=level*20){
+exp=0
+level++
+log("⭐ レベルアップ！ Lv"+level)
+}
 
-    updateInventory()
-    nextTurn()
+}
+
+function updateInventory(){
+
+const inv=document.getElementById("inventory")
+inv.innerHTML=""
+
+inventory.forEach((item,i)=>{
+
+const div=document.createElement("div")
+div.className="item"
+div.innerText=item
+
+div.onclick=()=>useItem(i)
+
+inv.appendChild(div)
+
+})
+
+}
+
+function useItem(i){
+
+const item=inventory[i]
+
+if(item==="🍙 食料") food+=25
+if(item==="💧 水") water+=25
+if(item==="🔋 ドリンク") energy+=30
+
+inventory.splice(i,1)
+
+clamp()
+updateBars()
+updateInventory()
+
+}
+
+function goHome(){
+
+energy+=20
+log("🏠 家で休んだ")
+
+nextTurn()
+
+}
+
+function goStore(){
+
+document.getElementById("shop").style.display="block"
+log("🏪 コンビニに来た")
+
+}
+
+function buy(type){
+
+if(type==="food" && money>=20){
+money-=20
+inventory.push("🍙 食料")
+}
+
+if(type==="water" && money>=15){
+money-=15
+inventory.push("💧 水")
+}
+
+if(type==="drink" && money>=30){
+money-=30
+inventory.push("🔋 ドリンク")
+}
+
+updateInventory()
+updateBars()
+
+}
+
+function zombie(){
+
+const r=Math.random()
+
+if(r<0.3){
+
+log("🧟 ゾンビ出現！")
+
+if(Math.random()<0.5){
+energy-=20
+log("攻撃された！")
+}else{
+money+=20
+log("倒した！20円ゲット")
+}
+
+}
+
+}
+
+function explore(place){
+
+document.getElementById("shop").style.display="none"
+
+energy-=10
+
+gainExp(10)
+
+if(weather==="雨") energy-=5
+if(weather==="嵐") energy-=10
+
+let r=Math.random()
+
+if(r<0.3){
+inventory.push("🍙 食料")
+log("食料発見")
+}
+
+else if(r<0.6){
+inventory.push("💧 水")
+log("水発見")
+}
+
+else{
+money+=10
+log("10円拾った")
+}
+
+zombie()
+
+updateInventory()
+
+nextTurn()
+
 }
 
 updateBars()
@@ -239,3 +337,4 @@ updateInventory()
 
 </body>
 </html>
+```
