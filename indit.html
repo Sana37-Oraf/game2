@@ -3,22 +3,19 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>日常サバイバルゲーム</title>
+<title>日常サバイバルゲーム＋アイテム</title>
 
 <style>
+
 body{
-    font-family: sans-serif;
-    background:#1e1e2f;
+    background:#1b1b2b;
     color:white;
+    font-family:sans-serif;
     text-align:center;
 }
 
-h1{
-    margin-top:20px;
-}
-
 #game{
-    width:400px;
+    width:420px;
     margin:auto;
     background:#2a2a40;
     padding:20px;
@@ -27,50 +24,59 @@ h1{
 
 .status{
     margin:10px 0;
-    font-size:18px;
 }
 
 .bar{
-    height:20px;
     background:#444;
+    height:20px;
     border-radius:10px;
     overflow:hidden;
 }
 
 .fill{
     height:100%;
-    width:100%;
     background:lime;
 }
 
 button{
+    padding:10px;
     margin:5px;
-    padding:10px 15px;
     border:none;
     border-radius:5px;
-    font-size:16px;
     cursor:pointer;
 }
 
-button:hover{
-    opacity:0.8;
+#inventory{
+    margin-top:15px;
+    background:#111;
+    padding:10px;
+    border-radius:8px;
+}
+
+.item{
+    display:inline-block;
+    padding:6px 10px;
+    margin:4px;
+    background:#333;
+    border-radius:6px;
+    cursor:pointer;
 }
 
 #log{
-    margin-top:15px;
+    margin-top:10px;
     height:120px;
     overflow:auto;
     background:#111;
     padding:10px;
-    font-size:14px;
     text-align:left;
 }
-</style>
 
+</style>
 </head>
+
 <body>
 
-<h1>🏠 日常サバイバルゲーム</h1>
+<h1>🏠 日常サバイバル</h1>
 
 <div id="game">
 
@@ -86,11 +92,13 @@ button:hover{
 <div class="bar"><div id="energyBar" class="fill"></div></div>
 </div>
 
-<p>📅 生存日数: <span id="day">1</span></p>
+<p>📅 生存日数 <span id="day">1</span></p>
 
-<button onclick="shop()">🛒 買い物</button>
 <button onclick="rest()">💤 休む</button>
-<button onclick="explore()">🚶 探索</button>
+<button onclick="explore()">🔍 探索</button>
+
+<h3>🎒 持ち物</h3>
+<div id="inventory"></div>
 
 <div id="log"></div>
 
@@ -98,95 +106,135 @@ button:hover{
 
 <script>
 
-let food = 100;
-let water = 100;
-let energy = 100;
-let day = 1;
+let food=100
+let water=100
+let energy=100
+let day=1
 
-function updateBars(){
-    document.getElementById("foodBar").style.width = food+"%";
-    document.getElementById("waterBar").style.width = water+"%";
-    document.getElementById("energyBar").style.width = energy+"%";
-    document.getElementById("day").textContent = day;
-}
+let inventory=[]
 
-function log(text){
-    const logBox = document.getElementById("log");
-    logBox.innerHTML = text + "<br>" + logBox.innerHTML;
+function log(t){
+    const box=document.getElementById("log")
+    box.innerHTML=t+"<br>"+box.innerHTML
 }
 
 function clamp(){
-    food = Math.max(0,Math.min(100,food));
-    water = Math.max(0,Math.min(100,water));
-    energy = Math.max(0,Math.min(100,energy));
+    food=Math.max(0,Math.min(100,food))
+    water=Math.max(0,Math.min(100,water))
+    energy=Math.max(0,Math.min(100,energy))
+}
+
+function updateBars(){
+    foodBar.style.width=food+"%"
+    waterBar.style.width=water+"%"
+    energyBar.style.width=energy+"%"
+    document.getElementById("day").textContent=day
+}
+
+function updateInventory(){
+
+    const inv=document.getElementById("inventory")
+    inv.innerHTML=""
+
+    inventory.forEach((item,i)=>{
+        const div=document.createElement("div")
+        div.className="item"
+        div.innerText=item
+        div.onclick=()=>useItem(i)
+        inv.appendChild(div)
+    })
+}
+
+function useItem(i){
+
+    const item=inventory[i]
+
+    if(item==="🍎 食料"){
+        food+=25
+        log("食料を食べた")
+    }
+
+    if(item==="💧 水"){
+        water+=25
+        log("水を飲んだ")
+    }
+
+    if(item==="🔋 エナジードリンク"){
+        energy+=30
+        log("エナジードリンクで回復")
+    }
+
+    if(item==="🥫 保存食"){
+        food+=40
+        log("保存食で大回復")
+    }
+
+    inventory.splice(i,1)
+
+    clamp()
+    updateBars()
+    updateInventory()
 }
 
 function gameOver(){
-    if(food<=0 || water<=0 || energy<=0){
-        alert("ゲームオーバー\n生存日数: "+day+"日");
-        location.reload();
+    if(food<=0||water<=0||energy<=0){
+        alert("ゲームオーバー\n生存日数 "+day+"日")
+        location.reload()
     }
 }
 
 function nextTurn(){
-    food -= 5;
-    water -= 7;
-    energy -= 6;
 
-    clamp();
-    day++;
+    food-=5
+    water-=7
+    energy-=6
 
-    updateBars();
-    gameOver();
-}
+    day++
 
-function shop(){
-    if(energy < 10){
-        log("疲れて買い物に行けない…");
-        return;
-    }
-
-    food += 20;
-    water += 20;
-    energy -= 10;
-
-    log("スーパーで食料と水を買った");
-    clamp();
-    nextTurn();
+    clamp()
+    updateBars()
+    gameOver()
 }
 
 function rest(){
-    energy += 30;
-    food -= 5;
-    water -= 5;
 
-    log("しっかり休んだ");
-    clamp();
-    nextTurn();
+    energy+=30
+    food-=5
+    water-=5
+
+    log("休んで体力回復")
+
+    clamp()
+    nextTurn()
 }
 
 function explore(){
 
-    let r = Math.random();
+    const r=Math.random()
 
-    if(r < 0.4){
-        food += 15;
-        log("食べ物を見つけた！");
+    if(r<0.25){
+        inventory.push("🍎 食料")
+        log("食料を発見！")
     }
-    else if(r < 0.7){
-        water += 15;
-        log("水を見つけた！");
+    else if(r<0.5){
+        inventory.push("💧 水")
+        log("水を発見！")
+    }
+    else if(r<0.75){
+        inventory.push("🔋 エナジードリンク")
+        log("エナジードリンク発見！")
     }
     else{
-        energy -= 15;
-        log("何も見つからず疲れた…");
+        inventory.push("🥫 保存食")
+        log("保存食を発見！")
     }
 
-    clamp();
-    nextTurn();
+    updateInventory()
+    nextTurn()
 }
 
-updateBars();
+updateBars()
+updateInventory()
 
 </script>
 
